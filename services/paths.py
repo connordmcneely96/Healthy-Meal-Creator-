@@ -1,11 +1,7 @@
-"""Utility helpers for resolving project data directories.
-
-This module centralises the location logic for all persisted artifacts. It
-provides convenience helpers that work consistently both locally and when
-running on Hugging Face Spaces where the working directory may differ.
-"""
+"""Utility helpers for resolving project data directories and filenames."""
 from __future__ import annotations
 
+import re
 from pathlib import Path
 from typing import Iterable
 
@@ -21,13 +17,14 @@ LOG_DIR = DATA_ROOT / "logs"
 
 
 def _expected_directories() -> Iterable[Path]:
-    """Return all directories that should exist for the application.
+    """Return all directories that should exist for the application."""
 
-    Keeping this as a helper makes it easy to update test expectations and to
-    iterate without duplication.
-    """
-
-    return (MEAL_PLAN_DIR, DALLE_DIR, WHISPER_DIR, LOG_DIR)
+    return (
+        MEAL_PLAN_DIR,
+        DALLE_DIR,
+        WHISPER_DIR,
+        LOG_DIR,
+    )
 
 
 def ensure_data_directories() -> None:
@@ -63,6 +60,30 @@ def get_data_directory(name: str) -> Path:
         raise ValueError(f"Unknown data directory '{name}'.") from exc
 
 
+def safe_filename(name: str, *, ext: str | None = None, max_length: int = 80) -> str:
+    """Return a filesystem-safe filename derived from ``name``.
+
+    Non-alphanumeric characters are collapsed into hyphens and the resulting
+    string is trimmed to ``max_length`` characters (excluding the extension).
+    """
+
+    normalized = re.sub(r"[^A-Za-z0-9]+", "-", name).strip("-") or "artifact"
+    if max_length > 0:
+        normalized = normalized[:max_length]
+    if ext and not ext.startswith("."):
+        ext = f".{ext}"
+    return f"{normalized}{ext or ''}"
+
+
+def build_artifact_path(directory: Path, stem: str, *, ext: str) -> Path:
+    """Create a safe path inside ``directory`` using ``stem`` and ``ext``."""
+
+    ensure_data_directories()
+    directory.mkdir(parents=True, exist_ok=True)
+    filename = safe_filename(stem, ext=ext)
+    return directory / filename
+
+
 # Ensure directories exist when the module is imported. This keeps the rest of
 # the application simple.
 ensure_data_directories()
@@ -76,4 +97,6 @@ __all__ = [
     "LOG_DIR",
     "ensure_data_directories",
     "get_data_directory",
+    "safe_filename",
+    "build_artifact_path",
 ]

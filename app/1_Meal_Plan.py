@@ -1,94 +1,69 @@
 from __future__ import annotations
 
+import json
+import os
+
 import streamlit as st
 
 from app import components
-from services import gpt
+from services import gpt, paths
 
 st.set_page_config(page_title="Meal Plan Studio", page_icon="🥗")
-components.page_title(
-    "Meal Plan Studio",
-    icon="🥗",
-    description="Generate structured, goal-aware meal plans tailored to your needs.",
-)
+st.title("Meal Plan Studio")
+st.write("Craft personalised meal plans using OpenAI chat completions.")
 
 if not gpt.is_configured():
-    st.warning("Add your OpenAI API key in Settings to enable meal planning.")
+    st.warning("Configure your OPENAI_API_KEY in Settings to enable this tool.")
 
-with st.form("meal-plan-form"):
-    col1, col2, col3 = st.columns(3)
-    with col1:
-        age = st.number_input("Age", min_value=1, max_value=110, value=32)
-    with col2:
-        gender = st.selectbox("Gender", options=["Female", "Male", "Non-binary", "Prefer not to say"])
-    with col3:
-        meals_per_day = st.slider("Meals per day", min_value=2, max_value=6, value=3)
+prompt = st.text_area(
+    "Describe your goals",
+    value="Create a 3-day vegetarian meal plan with 2000 kcal per day.",
+    height=150,
+)
 
-    calorie_target = st.slider("Daily calorie target", min_value=1200, max_value=4000, value=2200, step=50)
-    diet_preferences = st.multiselect(
-        "Dietary preferences",
-        options=[
-            "Vegetarian",
-            "Vegan",
-            "Pescatarian",
-            "Gluten-free",
-            "Dairy-free",
-            "Low-carb",
-            "Mediterranean",
-        ],
-        default=["Mediterranean"],
-    )
-    additional_goals = st.text_area(
-        "Additional goals", value="Focus on whole foods and support post-workout recovery.", height=120
-    )
+col1, col2 = st.columns(2)
+with col1:
+    tokens = st.number_input("Max tokens", min_value=64, max_value=2048, value=512, step=64)
+with col2:
+    temperature = st.slider("Creativity", min_value=0.0, max_value=1.0, value=0.4, step=0.1)
 
-    submitted = st.form_submit_button(
-        "Create meal plan", type="primary", disabled=not gpt.is_configured()
-    )
+submit = st.button("Generate meal plan", type="primary", disabled=not gpt.is_configured())
 
-if submitted:
-    goal_description = (
-        f"Meal plan for a {age}-year-old {gender.lower()}. {additional_goals}".strip()
-    )
-    restrictions = ", ".join(diet_preferences) if diet_preferences else None
-
-    with st.spinner("Generating your personalised plan..."):
+if submit and prompt:
+    os.environ["OPENAI_MAX_TOKENS"] = str(tokens)
+    os.environ["OPENAI_TEMPERATURE"] = str(temperature)
+    with st.spinner("Contacting OpenAI..."):
         try:
-            result = gpt.create_meal_plan(
-                goal=goal_description,
-                calories=str(calorie_target),
-                restrictions=restrictions,
-                meals_per_day=meals_per_day,
-            )
+            result = gpt.generate_meal_plan(prompt)
         except Exception as exc:  # pragma: no cover - network call
             st.error(str(exc))
             result = None
-
     if result:
-        plan = result.get("plan", {})
-        components.stat_pills(
-            [
-                ("Age", f"{age} yrs"),
-                ("Calories", f"{calorie_target:,} kcal"),
-                ("Meals", f"{meals_per_day} / day"),
-            ]
-        )
-        st.subheader("Daily schedule")
-        components.render_meal_plan_table(plan)
+        st.success("Meal plan generated")
+        components.render_json_block(result)
+        # Persist the prompt/response for gallery view
+        paths.MEAL_PLAN_DIR.mkdir(parents=True, exist_ok=True)
+        output_path = paths.MEAL_PLAN_DIR / "meal_plan.json"
+        history = []
+        if output_path.exists():
+            try:
+                history = json.loads(output_path.read_text())
+            except json.JSONDecodeError:
+                history = []
+        history.append(result)
+        output_path.write_text(json.dumps(history, indent=2))
+        st.download_button("Download JSON", data=json.dumps(result, indent=2), file_name="meal_plan.json")
 
-        markdown = result.get("markdown", "")
-        if markdown:
-            st.subheader("Full plan (Markdown)")
-            st.markdown(markdown)
-            st.download_button(
-                "Download Markdown",
-                data=markdown,
-                file_name="meal-plan.md",
-                type="secondary",
-            )
-        components.render_json_block(result, expanded=False)
-        if result.get("path"):
-            st.caption(f"Stored at `{result['path']}`")
-
-if not submitted:
-    st.info("Fill out the form and click **Create meal plan** to generate your plan.")
+with st.expander("Sample meal plan layout"):
+    sample = {
+        "days": {
+            "Day 1": {
+                "breakfast": "Oatmeal with berries",
+                "lunch": "Quinoa salad",
+                "dinner": "Stir-fried tofu with vegetables",
+            }
+        },
+        "shopping_list": ["Oats", "Berries", "Quinoa", "Tofu", "Veggies"],
+    }
+    components.render_meal_plan_table(sample)
+    st.json(sample)

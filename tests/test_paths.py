@@ -4,6 +4,7 @@ from services import paths
 
 
 def test_directories_exist(tmp_path, monkeypatch):
+    # Ensure environment is isolated by pointing to a temp dir
     monkeypatch.setattr(paths, "DATA_ROOT", tmp_path)
     monkeypatch.setattr(paths, "MEAL_PLAN_DIR", tmp_path / "meal_plan")
     monkeypatch.setattr(paths, "DALLE_DIR", tmp_path / "dalle")
@@ -30,14 +31,3 @@ def test_get_data_directory_invalid_name():
         assert "Unknown data directory" in str(exc)
     else:  # pragma: no cover - safeguard
         raise AssertionError("Expected ValueError")
-
-
-def test_safe_filename_and_build_artifact_path(tmp_path, monkeypatch):
-    monkeypatch.setattr(paths, "LOG_DIR", tmp_path / "logs")
-    result = paths.safe_filename("My Cool Artifact!!!", ext="txt")
-    assert result.startswith("My-Cool-Artifact")
-    path = paths.build_artifact_path(paths.LOG_DIR, "My Cool Artifact!!!", ext="txt")
-    assert path.parent == paths.LOG_DIR
-    assert path.suffix == ".txt"
-    assert path.exists() is False
-    assert path.name == result

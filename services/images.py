@@ -5,7 +5,7 @@ import base64
 import os
 import time
 from pathlib import Path
-from typing import Dict, List
+from typing import Dict
 
 try:  # pragma: no cover - optional dependency for tests
     from openai import OpenAI
@@ -64,28 +64,20 @@ def _with_retries(func, *, retries: int = 3, backoff: float = 1.5):
     raise RuntimeError(f"OpenAI image request failed after retries: {last_error}") from last_error
 
 
-def generate_image(
-    prompt: str,
-    *,
-    size: str | None = None,
-    n: int = 1,
-    style: str | None = None,
-) -> Dict[str, object]:
-    """Generate one or more images and persist them to disk."""
+def generate_image(prompt: str, *, size: str | None = None) -> Dict[str, str]:
+    """Generate an image using OpenAI's image API and persist it to disk."""
 
     used_size = size or DEFAULT_SIZE
-    full_prompt = prompt.strip()
-    if style:
-        full_prompt = f"{style} style {full_prompt}".strip()
+    filename_stem = f"image-{time.strftime('%Y%m%dT%H%M%S')}"
+    output_path = build_artifact_path(DALLE_DIR, filename_stem, ext="png")
 
     client = _client()
 
     def _request():
         return client.images.generate(
             model=DEFAULT_MODEL,
-            prompt=full_prompt,
+            prompt=prompt,
             size=used_size,
-            n=max(1, n),
             response_format="b64_json",
         )
 
@@ -93,23 +85,10 @@ def generate_image(
         result = _with_retries(_request)
     except RuntimeError as exc:  # pragma: no cover - network errors are external
         raise RuntimeError(f"Image generation failed: {exc}") from exc
+    image_data = result.data[0].b64_json
+    _write_png(image_data, output_path)
 
-    timestamp = time.strftime("%Y%m%dT%H%M%S")
-    saved_paths: List[str] = []
-    for index, image in enumerate(result.data, start=1):
-        suffix = f"-{index}" if n > 1 else ""
-        filename_stem = f"image-{timestamp}{suffix}"
-        output_path = build_artifact_path(DALLE_DIR, filename_stem, ext="png")
-        _write_png(image.b64_json, output_path)
-        saved_paths.append(str(output_path))
-
-    return {
-        "paths": saved_paths,
-        "prompt": full_prompt,
-        "size": used_size,
-        "count": len(saved_paths),
-        "style": style,
-    }
+    return {"path": str(output_path), "prompt": prompt, "size": used_size}
 
 
 def edit_image(
@@ -118,15 +97,12 @@ def edit_image(
     prompt: str,
     mask_path: str | Path | None = None,
     size: str | None = None,
-    n: int = 1,
-    style: str | None = None,
-) -> Dict[str, object]:
+) -> Dict[str, str]:
     """Edit an existing image using the image model and save the result."""
 
     used_size = size or DEFAULT_SIZE
-    full_prompt = prompt.strip()
-    if style:
-        full_prompt = f"{style} style {full_prompt}".strip()
+    filename_stem = f"image-edit-{time.strftime('%Y%m%dT%H%M%S')}"
+    output_path = build_artifact_path(DALLE_DIR, filename_stem, ext="png")
 
     image_path = Path(image_path)
     if not image_path.exists():
@@ -139,47 +115,32 @@ def edit_image(
 
     def _request():
         with image_path.open("rb") as image_file:
+            files = {"image": image_file}
+            mask_file = None
             if mask:
-                with mask.open("rb") as mask_file:
-                    return client.images.edit(
-                        model=DEFAULT_MODEL,
-                        prompt=full_prompt,
-                        image=image_file,
-                        mask=mask_file,
-                        size=used_size,
-                        n=max(1, n),
-                        response_format="b64_json",
-                    )
-            return client.images.edit(
-                model=DEFAULT_MODEL,
-                prompt=full_prompt,
-                image=image_file,
-                size=used_size,
-                n=max(1, n),
-                response_format="b64_json",
-            )
+                mask_file = mask.open("rb")
+                files["mask"] = mask_file
+            try:
+                return client.images.edit(
+                    model=DEFAULT_MODEL,
+                    prompt=prompt,
+                    image=files.get("image"),
+                    mask=files.get("mask"),
+                    size=used_size,
+                    response_format="b64_json",
+                )
+            finally:
+                if mask_file:
+                    mask_file.close()
 
     try:
         result = _with_retries(_request)
     except RuntimeError as exc:  # pragma: no cover - network errors are external
         raise RuntimeError(f"Image edit failed: {exc}") from exc
-    timestamp = time.strftime("%Y%m%dT%H%M%S")
-    saved_paths: List[str] = []
-    for index, image in enumerate(result.data, start=1):
-        suffix = f"-{index}" if n > 1 else ""
-        filename_stem = f"image-edit-{timestamp}{suffix}"
-        output_path = build_artifact_path(DALLE_DIR, filename_stem, ext="png")
-        _write_png(image.b64_json, output_path)
-        saved_paths.append(str(output_path))
+    image_data = result.data[0].b64_json
+    _write_png(image_data, output_path)
 
-    return {
-        "paths": saved_paths,
-        "prompt": full_prompt,
-        "size": used_size,
-        "count": len(saved_paths),
-        "style": style,
-        "source": str(image_path),
-    }
+    return {"path": str(output_path), "prompt": prompt, "size": used_size}
 
 
 __all__ = ["generate_image", "edit_image", "is_configured"]

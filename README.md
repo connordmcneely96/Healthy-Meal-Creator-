@@ -1,91 +1,71 @@
 # Healthy Meal Creator
 
-A production-ready Streamlit application that demonstrates three OpenAI-powered
-workflows: meal planning, image generation, and speech utilities. The project is
-optimized for local execution and free hosting on [Hugging Face Spaces](https://huggingface.co/spaces).
+A production-ready Streamlit application showcasing three OpenAI-powered tools:
+meal planning, image generation, and speech utilities. Built to run locally or
+as a free [Hugging Face Space](https://huggingface.co/spaces).
 
 ## Features
 
 - **Diagnostics home** with environment health checks
 - **Meal Plan Studio** for generating structured nutrition plans
-- **Image Studio** for GPT-image creation and editing workflows
-- **Speech Lab** for Whisper transcription, summarization, and TTS playback
-- **Gallery** to browse generated artifacts saved under `data/`
+- **Image Studio** for DALL·E powered visuals
+- **Speech Lab** for Whisper transcription and text-to-speech
+- **Gallery** to browse generated artifacts
 - **Settings** page to manage API keys without persisting secrets
 
-## Getting started locally
+## Quick start
 
-1. **Clone and install dependencies**
-
-   ```bash
-   python -m venv .venv
-   source .venv/bin/activate
-   pip install -r requirements.txt
-   ```
-
-2. **Configure environment**
-
-   ```bash
-   cp .env.sample .env
-   # edit .env to include your OpenAI API key
-   ```
-
-3. **Run Streamlit**
-
-   ```bash
-   streamlit run app/Home.py
-   ```
-
-### Optional FastAPI health endpoints
-
-For container platforms that require an HTTP health probe, you can launch the
-lightweight FastAPI app locally:
+### 1. Clone and install
 
 ```bash
-uvicorn api.main:app --reload
+python -m venv .venv
+source .venv/bin/activate
+pip install -r requirements.txt
 ```
 
-## Deploying to Hugging Face Spaces
+### 2. Configure environment
 
-1. Create a new Space and choose the **Streamlit** SDK.
-2. Connect the Space to this GitHub repository or upload the project files.
-3. In the Space **Settings → Secrets** tab, add `OPENAI_API_KEY` with your key.
-4. In **Runtime → App**, set the Run command to:
+Copy the sample environment file and fill in your OpenAI key:
 
-   ```bash
-   streamlit run app/Home.py
-   ```
+```bash
+cp .env.sample .env
+```
 
-5. Restart or rebuild the Space. Once the build completes, the app will launch automatically.
+Alternatively, set secrets directly in Hugging Face Space settings.
+
+### 3. Run locally
+
+```bash
+streamlit run app/Home.py
+```
+
+### 4. Deploy to Hugging Face Spaces
+
+1. Create a new **Streamlit** Space.
+2. Upload this repository's files.
+3. In the Space settings, add `OPENAI_API_KEY` as a secret.
+4. Trigger a rebuild. The Space will launch automatically.
 
 ## Data storage
 
-Generated artifacts are organized under `data/`:
+All generated artifacts are stored under `data/`:
 
-- `data/meal_plan` – structured meal plans and Markdown exports
+- `data/meal_plan` – meal plan JSON logs
 - `data/dalle` – generated image files
-- `data/whisper` – transcripts, translations, and summaries
-- `data/logs` – application log files and audio synthesis outputs
+- `data/whisper` – Whisper transcripts
+- `data/logs` – speech synthesis outputs and miscellaneous logs
 
-Directories are created on demand; no manual setup is required.
+These directories are created automatically at runtime.
 
 ## Testing
 
-Run the automated tests to validate path helpers and basic imports:
+Run the automated tests to validate project structure:
 
 ```bash
 pytest
 ```
 
-## Screenshots
-
-Screenshots can be placed under `docs/screenshots/` once captured:
-
-- ![Home page](docs/screenshots/home.png)
-- ![Meal plan workflow](docs/screenshots/meal-plan.png)
-- ![Image studio](docs/screenshots/image-studio.png)
-
-## License
+## Licensing
 
 This project is licensed under the terms of the MIT License. See
-[LICENSE](LICENSE) for full text.
+[LICENSE](LICENSE) for details.

@@ -1,0 +1,14 @@
+name: Codespaces Port Hints
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  annotate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Provide port usage guidance
+        run: |
+          echo "Codespaces will automatically forward Next.js on port 3000 and Streamlit on port 8501."

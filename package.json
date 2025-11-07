@@ -1,0 +1,13 @@
+{
+  "name": "unified-ai-lab",
+  "private": true,
+  "scripts": {
+    "dev:web": "pnpm --filter ./web dev",
+    "dev:app": "streamlit run app/Home.py",
+    "format": "prettier -w .",
+    "lint": "pnpm --filter ./web lint"
+  },
+  "devDependencies": {
+    "prettier": "^3.2.5"
+  }
+}

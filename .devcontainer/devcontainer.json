@@ -1,0 +1,20 @@
+{
+  "name": "unified-ai-lab",
+  "build": {
+    "dockerfile": "Dockerfile"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/git:1": {}
+  },
+  "postCreateCommand": "pnpm -C web install && pip install -r app/requirements.txt",
+  "forwardPorts": [3000, 8501],
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-python.python"
+      ]
+    }
+  }
+}

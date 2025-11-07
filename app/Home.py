@@ -1,57 +1,57 @@
-from __future__ import annotations
+"""Streamlit playground for local demos."""
 
-import platform
-import socket
+import os
+from typing import Optional
 
 import streamlit as st
+from dotenv import load_dotenv
+from openai import OpenAI
 
-from app import components
-from services import gpt, images, paths, speech
+load_dotenv()
 
-st.set_page_config(page_title="Healthy Meal Creator", page_icon="🥗", layout="wide")
+st.set_page_config(
+    page_title="Unified AI Lab • Streamlit",
+    page_icon="🤖",
+    layout="centered",
+)
 
-st.title("🥗 Healthy Meal Creator — Diagnostics")
+st.title("🤖 Unified AI Lab – OpenAI Smoke Test")
+st.caption(
+    "This Streamlit app is intended for local development and GitHub Codespaces demos."
+)
+
+api_key: Optional[str] = os.getenv("OPENAI_API_KEY")
+
+if not api_key:
+    st.warning(
+        "Set OPENAI_API_KEY in a local .env file or Codespaces secret to enable OpenAI calls.",
+        icon="⚠️",
+    )
+else:
+    client = OpenAI(api_key=api_key)
+
+    with st.form("prompt-form", clear_on_submit=False):
+        prompt = st.text_area(
+            "Prompt",
+            value="Say hello from Streamlit!",
+            help="Your text will be sent to OpenAI's Responses API",
+        )
+        submitted = st.form_submit_button("Generate response")
+
+    if submitted:
+        with st.spinner("Contacting OpenAI..."):
+            try:
+                response = client.responses.create(
+                    model="gpt-4o-mini",
+                    input=prompt,
+                    max_output_tokens=200,
+                )
+                st.success("Model response")
+                st.write(response.output_text)
+            except Exception as exc:  # pragma: no cover - surface API errors to UI
+                st.error(f"OpenAI request failed: {exc}")
+
+st.divider()
 st.markdown(
-    """Use this dashboard to verify your environment before exploring the tools.
-    The checks below run on every refresh so you can immediately validate
-    configuration changes."""
+    "Need an API key? Visit [platform.openai.com](https://platform.openai.com/)."
 )
-
-with st.expander("Environment info", expanded=False):
-    st.write({
-        "Python": platform.python_version(),
-        "Hostname": socket.gethostname(),
-        "OpenAI client": st.session_state.get("openai_client_version", "1.13+"),
-    })
-
-st.subheader("Health checks")
-
-components.render_status_badge(
-    "OpenAI API Key",
-    ok=gpt.is_configured(),
-    help_text="Set OPENAI_API_KEY in your environment or session state.",
-)
-components.render_status_badge(
-    "Image service configured",
-    ok=images.is_configured(),
-    help_text="Required for DALL·E image generation.",
-)
-components.render_status_badge(
-    "Speech service configured",
-    ok=speech.is_configured(),
-    help_text="Needed for Whisper transcription and TTS.",
-)
-
-components.render_status_badge(
-    "Data directories",
-    ok=all(path.exists() for path in (paths.MEAL_PLAN_DIR, paths.DALLE_DIR, paths.WHISPER_DIR)),
-    help_text=f"Artifacts stored in {paths.DATA_ROOT}",
-)
-
-with st.expander("Directory overview"):
-    st.write({
-        "Meal plans": str(paths.MEAL_PLAN_DIR),
-        "Images": str(paths.DALLE_DIR),
-        "Transcripts": str(paths.WHISPER_DIR),
-        "Logs": str(paths.LOG_DIR),
-    })

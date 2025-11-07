@@ -1,0 +1,97 @@
+lockfileVersion: '6.0'
+
+settings:
+  autoInstallPeers: true
+  excludeLinksFromLockfile: false
+
+importers:
+  .:
+    specifiers:
+      '@radix-ui/react-dropdown-menu': ^2.0.6
+      '@radix-ui/react-slot': ^1.0.2
+      '@types/node': ^20.12.7
+      '@types/react': ^18.2.79
+      '@types/react-dom': ^18.2.25
+      autoprefixer: ^10.4.17
+      class-variance-authority: ^0.7.0
+      clsx: ^2.1.0
+      eslint: ^9.1.0
+      eslint-config-next: 14.2.3
+      lucide-react: ^0.397.0
+      next: 14.2.3
+      openai: ^4.37.0
+      postcss: ^8.4.38
+      prettier: ^3.2.5
+      react: 18.2.0
+      react-dom: 18.2.0
+      tailwind-merge: ^2.2.1
+      tailwindcss: ^3.4.3
+      tailwindcss-animate: ^1.0.7
+      typescript: ^5.4.5
+    dependencies:
+      '@radix-ui/react-dropdown-menu':
+        specifier: ^2.0.6
+        version: 2.0.6
+      '@radix-ui/react-slot':
+        specifier: ^1.0.2
+        version: 1.0.2
+      class-variance-authority:
+        specifier: ^0.7.0
+        version: 0.7.0
+      clsx:
+        specifier: ^2.1.0
+        version: 2.1.0
+      lucide-react:
+        specifier: ^0.397.0
+        version: 0.397.0
+      next:
+        specifier: 14.2.3
+        version: 14.2.3
+      openai:
+        specifier: ^4.37.0
+        version: 4.37.0
+      react:
+        specifier: 18.2.0
+        version: 18.2.0
+      react-dom:
+        specifier: 18.2.0
+        version: 18.2.0
+      tailwind-merge:
+        specifier: ^2.2.1
+        version: 2.2.1
+      tailwindcss:
+        specifier: ^3.4.3
+        version: 3.4.3
+      tailwindcss-animate:
+        specifier: ^1.0.7
+        version: 1.0.7
+    devDependencies:
+      '@types/node':
+        specifier: ^20.12.7
+        version: 20.12.7
+      '@types/react':
+        specifier: ^18.2.79
+        version: 18.2.79
+      '@types/react-dom':
+        specifier: ^18.2.25
+        version: 18.2.25
+      autoprefixer:
+        specifier: ^10.4.17
+        version: 10.4.17
+      eslint:
+        specifier: ^9.1.0
+        version: 9.1.0
+      eslint-config-next:
+        specifier: 14.2.3
+        version: 14.2.3
+      postcss:
+        specifier: ^8.4.38
+        version: 8.4.38
+      prettier:
+        specifier: ^3.2.5
+        version: 3.2.5
+      typescript:
+        specifier: ^5.4.5
+        version: 5.4.5
+
+packages: {}
